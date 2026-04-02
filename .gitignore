@@ -41,6 +41,9 @@ yarn-error.log*
 /data/*.db-wal
 /data/*.db-shm
 
+# Dev tracker local data
+.dev-tracker/
+
 # vercel
 .vercel
 

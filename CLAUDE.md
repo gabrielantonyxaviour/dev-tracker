@@ -14,6 +14,10 @@
 - `src/lib/jsonl-parser.ts` — Parses Claude Code JSONL transcripts
 - `src/lib/constants.ts` — Model pricing, tool categories, project categorization
 - `src/scripts/import.ts` — Batch import of historical session data
+- `src/cli/` — CLI commands (setup, hook, start, import)
+- `src/lib/auth.ts` — API key validation and machine management
+- `src/app/api/ingest/session/` — Unified remote session ingest endpoint
+- `src/app/api/machines/` — Machine management CRUD endpoints
 
 ## Key conventions
 - Database path defaults to `./data/dev-tracker.db`, configurable via `DB_PATH`
