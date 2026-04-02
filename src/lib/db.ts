@@ -218,6 +218,32 @@ function initSchema(db: Database.Database) {
       value TEXT NOT NULL,
       updated_at TEXT DEFAULT (datetime('now'))
     );
+
+    CREATE TABLE IF NOT EXISTS machines (
+      id TEXT PRIMARY KEY,
+      hostname TEXT NOT NULL,
+      os TEXT NOT NULL,
+      label TEXT,
+      architecture TEXT,
+      first_seen_at TEXT NOT NULL,
+      last_seen_at TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS machine_daily_stats (
+      machine_id TEXT NOT NULL REFERENCES machines(id),
+      date TEXT NOT NULL,
+      session_count INTEGER DEFAULT 0,
+      prompt_count INTEGER DEFAULT 0,
+      active_duration_ms INTEGER DEFAULT 0,
+      total_input_tokens INTEGER DEFAULT 0,
+      total_output_tokens INTEGER DEFAULT 0,
+      total_cache_creation_tokens INTEGER DEFAULT 0,
+      total_cache_read_tokens INTEGER DEFAULT 0,
+      equivalent_cost_usd REAL DEFAULT 0,
+      PRIMARY KEY (machine_id, date)
+    );
+    CREATE INDEX IF NOT EXISTS idx_machine_daily_date ON machine_daily_stats(date);
   `);
 }
 
@@ -241,11 +267,21 @@ function migrateSchema(db: Database.Database) {
     ["compact_count", "INTEGER DEFAULT 0"],
     ["coding_active_ms", "INTEGER DEFAULT 0"],
     ["coding_idle_ms", "INTEGER DEFAULT 0"],
+    ["machine_id", "TEXT"],
   ];
   for (const [col, def] of sessionCols) {
     if (!hasColumn("sessions", col)) {
       db.exec(`ALTER TABLE sessions ADD COLUMN ${col} ${def}`);
     }
+  }
+
+  // Machine index on sessions
+  try {
+    db.exec(
+      `CREATE INDEX IF NOT EXISTS idx_sessions_machine ON sessions(machine_id)`,
+    );
+  } catch {
+    /* index already exists */
   }
 
   // Turns table — new columns
