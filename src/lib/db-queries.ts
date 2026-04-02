@@ -2,6 +2,7 @@ import { getDb } from "./db";
 import type {
   Session,
   SessionWithProject,
+  SessionWithProjectAndMachine,
   Turn,
   ToolUse,
   DailyStats,
@@ -22,8 +23,9 @@ export function getRecentSessions(
     sort?: string;
     include_agents?: boolean;
     min_prompts?: number;
+    machine_id?: string;
   },
-): { sessions: SessionWithProject[]; total: number } {
+): { sessions: SessionWithProjectAndMachine[]; total: number } {
   const db = getDb();
   const conditions: string[] = [];
   const params: unknown[] = [];
@@ -57,6 +59,10 @@ export function getRecentSessions(
     );
     params.push(`%${filters.search}%`);
   }
+  if (filters?.machine_id) {
+    conditions.push("s.machine_id = ?");
+    params.push(filters.machine_id);
+  }
 
   const where =
     conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
@@ -75,31 +81,37 @@ export function getRecentSessions(
 
   const sessions = db
     .prepare(
-      `SELECT s.*, p.display_name as project_display_name, p.path as project_path
-     FROM sessions s
-     JOIN projects p ON s.project_id = p.id
-     ${where}
-     ORDER BY ${orderBy}
-     LIMIT ? OFFSET ?`,
+      `SELECT s.*, p.display_name as project_display_name, p.path as project_path,
+          s.machine_id, m.label as machine_label, m.os as machine_os
+       FROM sessions s
+       JOIN projects p ON s.project_id = p.id
+       LEFT JOIN machines m ON s.machine_id = m.id
+       ${where}
+       ORDER BY ${orderBy}
+       LIMIT ? OFFSET ?`,
     )
-    .all(...params, limit, offset) as SessionWithProject[];
+    .all(...params, limit, offset) as SessionWithProjectAndMachine[];
 
   return { sessions, total: total.count };
 }
 
-export function getSessionById(
-  id: string,
-): (SessionWithProject & { turns: (Turn & { tools: ToolUse[] })[] }) | null {
+export function getSessionById(id: string):
+  | (SessionWithProjectAndMachine & {
+      turns: (Turn & { tools: ToolUse[] })[];
+    })
+  | null {
   const db = getDb();
 
   const session = db
     .prepare(
-      `SELECT s.*, p.display_name as project_display_name, p.path as project_path
-     FROM sessions s
-     JOIN projects p ON s.project_id = p.id
-     WHERE s.id = ?`,
+      `SELECT s.*, p.display_name as project_display_name, p.path as project_path,
+          s.machine_id, m.label as machine_label, m.os as machine_os
+       FROM sessions s
+       JOIN projects p ON s.project_id = p.id
+       LEFT JOIN machines m ON s.machine_id = m.id
+       WHERE s.id = ?`,
     )
-    .get(id) as SessionWithProject | undefined;
+    .get(id) as SessionWithProjectAndMachine | undefined;
 
   if (!session) return null;
 

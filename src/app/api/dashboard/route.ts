@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import {
   getTodayStats,
   getYesterdayStats,
@@ -10,14 +10,16 @@ import {
 } from "@/lib/db-queries";
 import type { DashboardData } from "@/lib/types";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const machineId = request.nextUrl.searchParams.get("machine_id");
     const today = new Date().toISOString().split("T")[0];
     const todayStats = getTodayStats();
     const yesterday = getYesterdayStats();
     const weeklyAvg = getWeeklyAvgStats();
     const { sessions: recentSessions } = getRecentSessions(10, 0, {
       min_prompts: 3,
+      machine_id: machineId ?? undefined,
     });
     const hourlyActivity = getHourlyActivity(today);
     const projectSplit = getProjectSplit(today);
@@ -31,9 +33,10 @@ export async function GET() {
          FROM sessions s JOIN projects p ON s.project_id = p.id
          WHERE s.ended_at IS NULL AND s.is_agent_session = 0
          AND s.started_at > datetime('now', '-2 hours')
+         AND (? IS NULL OR s.machine_id = ?)
          ORDER BY s.started_at DESC LIMIT 1`,
       )
-      .get() as
+      .get(machineId, machineId) as
       | {
           id: string;
           project: string;

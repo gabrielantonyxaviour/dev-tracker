@@ -268,7 +268,7 @@ export interface DashboardData {
     cost_usd: number;
     active_minutes: number;
   };
-  recent_sessions: SessionWithProject[];
+  recent_sessions: SessionWithProjectAndMachine[];
   hourly_activity: { hour: number; prompts: number; project: string }[];
   project_split: { project: string; minutes: number; sessions: number }[];
   live_session: { project: string; started_at: string } | null;

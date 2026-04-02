@@ -17,6 +17,7 @@ export async function GET(request: NextRequest) {
       model?: string;
       search?: string;
       sort?: string;
+      machine_id?: string;
     } = {};
 
     const project = searchParams.get("project");
@@ -38,6 +39,9 @@ export async function GET(request: NextRequest) {
     ) {
       filters.sort = sort;
     }
+
+    const machineId = searchParams.get("machine_id");
+    if (machineId) filters.machine_id = machineId;
 
     const { sessions, total } = getRecentSessions(limit, offset, filters);
 
