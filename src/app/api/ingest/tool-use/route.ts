@@ -1,10 +1,14 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
 import { v4 as uuid } from "uuid";
 import { getToolCategory } from "@/lib/constants";
+import { validateIngestAuth } from "@/lib/auth";
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
+    const authError = validateIngestAuth(request);
+    if (authError) return authError;
+
     const body = await request.json();
     const {
       session_id,

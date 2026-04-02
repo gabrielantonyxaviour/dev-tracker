@@ -14,15 +14,24 @@ import {
   rebuildProjectTotals,
 } from "@/lib/aggregator";
 import { v4 as uuid } from "uuid";
+import { validateIngestAuth, extractMachineId } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
   try {
+    const authError = validateIngestAuth(request);
+    if (authError) return authError;
+
     const body = await request.json();
     const { session_id, cwd, transcript_path } = body as {
       session_id?: string;
       cwd?: string;
       transcript_path?: string;
     };
+
+    const machineId = extractMachineId(
+      body as Record<string, unknown>,
+      request,
+    );
 
     if (!session_id || !transcript_path) {
       return NextResponse.json(
@@ -140,8 +149,8 @@ export async function POST(request: NextRequest) {
           duration_ms, active_duration_ms, prompt_count, response_count,
           total_input_tokens, total_output_tokens, total_cache_creation_tokens,
           total_cache_read_tokens, equivalent_cost_usd, primary_model,
-          entrypoint, version, is_agent_session
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          entrypoint, version, is_agent_session, machine_id
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       ).run(
         parsed.id,
         projectId,
@@ -163,6 +172,7 @@ export async function POST(request: NextRequest) {
         parsed.entrypoint,
         parsed.version,
         parsed.is_agent_session ? 1 : 0,
+        machineId,
       );
 
       for (const turn of parsed.turns) {

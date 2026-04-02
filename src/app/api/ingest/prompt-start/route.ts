@@ -2,10 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
 import { categorizeProject, deriveDisplayName } from "@/lib/constants";
 import { v4 as uuid } from "uuid";
+import { validateIngestAuth, extractMachineId } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
   try {
+    const authError = validateIngestAuth(request);
+    if (authError) return authError;
+
     const body = await request.json();
+    const machineId = extractMachineId(
+      body as Record<string, unknown>,
+      request,
+    );
     const { session_id, cwd, prompt } = body as {
       session_id?: string;
       cwd?: string;
@@ -84,9 +92,9 @@ export async function POST(request: NextRequest) {
     // Create a pending session record
     db.prepare(
       `INSERT INTO sessions (
-        id, project_id, title, started_at, prompt_count, entrypoint
-      ) VALUES (?, ?, ?, ?, 1, 'cli')`,
-    ).run(session_id, projectId, title, now);
+        id, project_id, title, started_at, prompt_count, entrypoint, machine_id
+      ) VALUES (?, ?, ?, ?, 1, 'cli', ?)`,
+    ).run(session_id, projectId, title, now, machineId);
 
     return NextResponse.json({
       status: "created",
