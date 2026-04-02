@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -167,6 +168,24 @@ export default function SettingsPage() {
               dev-tracker server is running when using Claude Code.
             </p>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Multi-Machine Tracking */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="text-sm">Multi-Machine Tracking</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            Track Claude Code usage across multiple machines. Configure remote
+            machines to push session data here.
+          </p>
+          <Link href="/settings/machines">
+            <Button variant="outline" size="sm">
+              Manage Machines
+            </Button>
+          </Link>
         </CardContent>
       </Card>
 
