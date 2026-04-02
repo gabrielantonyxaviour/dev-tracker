@@ -12,11 +12,10 @@ interface DevTrackerConfig {
 
 const CONFIG_DIR = path.join(os.homedir(), ".dev-tracker");
 const CONFIG_PATH = path.join(CONFIG_DIR, "config.json");
-const CLAUDE_SETTINGS_PATH = path.join(
-  os.homedir(),
-  ".claude",
-  "settings.json",
-);
+// Respect CLAUDE_CONFIG_DIR env var (same as Claude Code itself)
+const CLAUDE_DIR =
+  process.env.CLAUDE_CONFIG_DIR || path.join(os.homedir(), ".claude");
+const CLAUDE_SETTINGS_PATH = path.join(CLAUDE_DIR, "settings.json");
 
 export async function setupCommand(opts: {
   server: string;
@@ -59,10 +58,13 @@ export async function setupCommand(opts: {
     (h) => typeof h.command === "string" && !h.command.includes("dev-tracker"),
   );
 
-  // Add new hook
+  // Use absolute path to current script for reliability (works without global npm install)
+  const cliScript = path.resolve(process.argv[1]);
+  const hookCommand = `node "${cliScript}" hook session-end`;
+
   filtered.push({
     type: "command",
-    command: "npx dev-tracker hook session-end",
+    command: hookCommand,
     timeout: 30,
   });
 
@@ -75,6 +77,7 @@ export async function setupCommand(opts: {
     JSON.stringify(claudeSettings, null, 2),
   );
   console.log(`Stop hook installed in ${CLAUDE_SETTINGS_PATH}`);
+  console.log(`  Hook command: ${hookCommand}`);
 
   // 4. Test connection
   console.log(`\nTesting connection to ${opts.server}...`);
