@@ -129,6 +129,35 @@ export function rebuildModelDailyStats() {
   `);
 }
 
+export function rebuildMachineDailyStats() {
+  const db = getDb();
+
+  db.exec(`DELETE FROM machine_daily_stats`);
+
+  db.exec(`
+    INSERT INTO machine_daily_stats (
+      machine_id, date, session_count, prompt_count,
+      active_duration_ms, total_input_tokens, total_output_tokens,
+      total_cache_creation_tokens, total_cache_read_tokens,
+      equivalent_cost_usd
+    )
+    SELECT
+      s.machine_id,
+      date(s.started_at) as date,
+      COUNT(DISTINCT s.id),
+      COALESCE(SUM(s.prompt_count), 0),
+      COALESCE(SUM(s.active_duration_ms), 0),
+      COALESCE(SUM(s.total_input_tokens), 0),
+      COALESCE(SUM(s.total_output_tokens), 0),
+      COALESCE(SUM(s.total_cache_creation_tokens), 0),
+      COALESCE(SUM(s.total_cache_read_tokens), 0),
+      COALESCE(SUM(s.equivalent_cost_usd), 0)
+    FROM sessions s
+    WHERE s.machine_id IS NOT NULL AND s.is_agent_session = 0
+    GROUP BY s.machine_id, date(s.started_at)
+  `);
+}
+
 export function rebuildProjectTotals() {
   const db = getDb();
 
@@ -150,6 +179,8 @@ export function rebuildAllAggregates() {
   rebuildProjectDailyStats();
   console.log("Rebuilding model daily stats...");
   rebuildModelDailyStats();
+  console.log("Rebuilding machine daily stats...");
+  rebuildMachineDailyStats();
   console.log("Rebuilding project totals...");
   rebuildProjectTotals();
   console.log("All aggregates rebuilt.");
