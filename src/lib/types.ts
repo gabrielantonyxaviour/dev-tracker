@@ -39,12 +39,19 @@ export interface Session {
   total_web_fetches: number;
   parent_session_id: string | null;
   agent_name: string | null;
+  machine_id: string | null;
   compact_count: number;
 }
 
 export interface SessionWithProject extends Session {
   project_display_name: string;
   project_path: string;
+}
+
+export interface SessionWithProjectAndMachine extends SessionWithProject {
+  machine_id: string | null;
+  machine_label: string | null;
+  machine_os: string | null;
 }
 
 export interface Turn {
@@ -94,6 +101,22 @@ export interface ToolUse {
   input_summary: string | null;
   is_error: number;
   timestamp: string | null;
+}
+
+export interface Machine {
+  id: string;
+  hostname: string;
+  os: string;
+  label: string | null;
+  architecture: string | null;
+  first_seen_at: string;
+  last_seen_at: string;
+  created_at: string;
+}
+
+export interface MachineWithStats extends Machine {
+  session_count: number;
+  total_cost_usd: number;
 }
 
 export interface DailyStats {
@@ -256,4 +279,76 @@ export interface StatsQuery {
   from?: string;
   to?: string;
   project?: string;
+}
+
+export interface IngestSessionPayload {
+  machine_id: string;
+  machine_meta: {
+    hostname: string;
+    os: string;
+    architecture: string;
+  };
+  session: {
+    id: string;
+    cwd: string;
+    git_branch: string | null;
+    version: string | null;
+    started_at: string;
+    ended_at: string;
+    is_agent_session: boolean;
+    slug: string | null;
+    stop_reason: string | null;
+    parent_session_id: string | null;
+    agent_name: string | null;
+    total_web_searches: number;
+    total_web_fetches: number;
+    coding_active_ms: number;
+    coding_idle_ms: number;
+    turns: Array<{
+      turn_index: number;
+      prompt_text: string | null;
+      response_text: string | null;
+      prompt_timestamp: string;
+      response_timestamp: string | null;
+      duration_ms: number | null;
+      actual_duration_ms: number | null;
+      input_tokens: number;
+      output_tokens: number;
+      cache_creation_tokens: number;
+      cache_read_tokens: number;
+      cache_5m_tokens: number;
+      cache_1h_tokens: number;
+      model: string | null;
+      service_tier: string | null;
+      inference_speed: string | null;
+      stop_reason: string | null;
+      has_thinking: boolean;
+      message_count: number | null;
+      tool_use_count: number;
+      web_search_requests: number;
+      web_fetch_requests: number;
+      equivalent_cost_usd: number;
+      tool_uses: Array<{
+        tool_name: string;
+        tool_category: string;
+        input_summary: string | null;
+        is_error: boolean;
+        timestamp: string | null;
+      }>;
+    }>;
+    file_changes: string[];
+    hook_executions: Array<{
+      hook_command: string;
+      duration_ms: number | null;
+      had_error: boolean;
+      error_message: string | null;
+      timestamp: string | null;
+    }>;
+    compact_events: Array<{
+      timestamp: string;
+      pre_tokens: number;
+      trigger: string;
+      content_length: number;
+    }>;
+  };
 }
