@@ -2,6 +2,9 @@
   "name": "dev-tracker",
   "version": "0.1.0",
   "private": true,
+  "bin": {
+    "dev-tracker": "./bin/cli.js"
+  },
   "scripts": {
     "dev": "next dev -p 3020",
     "import": "npx tsx src/scripts/import.ts",
@@ -14,6 +17,7 @@
     "better-sqlite3": "^12.8.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "commander": "^14.0.3",
     "date-fns": "^4.1.0",
     "lucide-react": "^1.7.0",
     "next": "16.2.1",
