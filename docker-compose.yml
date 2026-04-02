@@ -1,0 +1,13 @@
+services:
+  dev-tracker:
+    build: .
+    ports:
+      - "3020:3020"
+    volumes:
+      - dev-tracker-data:/app/data
+    environment:
+      - DB_PATH=/app/data/dev-tracker.db
+    restart: unless-stopped
+
+volumes:
+  dev-tracker-data:
